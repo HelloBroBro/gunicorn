@@ -103,18 +103,20 @@ class Config(object):
     def worker_class_str(self):
         uri = self.settings['worker_class'].get()
 
-        # are we using a threaded worker?
-        is_sync = uri.endswith('SyncWorker') or uri == 'sync'
-        if is_sync and self.threads > 1:
-            return "gthread"
-        return uri
+        if isinstance(uri, str):
+            # are we using a threaded worker?
+            is_sync = uri.endswith('SyncWorker') or uri == 'sync'
+            if is_sync and self.threads > 1:
+                return "gthread"
+            return uri
+        return uri.__name__
 
     @property
     def worker_class(self):
         uri = self.settings['worker_class'].get()
 
         # are we using a threaded worker?
-        is_sync = uri.endswith('SyncWorker') or uri == 'sync'
+        is_sync = isinstance(uri, str) and (uri.endswith('SyncWorker') or uri == 'sync')
         if is_sync and self.threads > 1:
             uri = "gunicorn.workers.gthread.ThreadWorker"
 
@@ -1393,7 +1395,7 @@ class AccessLogFormat(Setting):
         s            status
         B            response length
         b            response length or ``'-'`` (CLF format)
-        f            referer
+        f            referrer (note: header is ``referer``)
         a            user agent
         T            request time in seconds
         M            request time in milliseconds
@@ -1504,7 +1506,7 @@ class LogConfigDict(Setting):
     desc = """\
     The log config dictionary to use, using the standard Python
     logging module's dictionary configuration format. This option
-    takes precedence over the :ref:`logconfig` and :ref:`logConfigJson` options,
+    takes precedence over the :ref:`logconfig` and :ref:`logconfig-json` options,
     which uses the older file configuration format and JSON
     respectively.
 
@@ -2152,7 +2154,7 @@ class CertReqs(Setting):
     ===========  ===========================
     --cert-reqs      Description
     ===========  ===========================
-    `0`          no client veirifcation
+    `0`          no client verification
     `1`          ssl.CERT_OPTIONAL
     `2`          ssl.CERT_REQUIRED
     ===========  ===========================
